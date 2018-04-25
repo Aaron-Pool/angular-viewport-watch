@@ -8,7 +8,7 @@
             $timeout.cancel(viewportUpdateTimeout);
             viewportUpdateTimeout = $timeout(function() {
                 scrollMonitor.update();
-            }, 10);
+            }, 10, false); // use false to ensure additional digest isn't called every 10 ms
         }
         return {
             restrict: "AE",
@@ -64,6 +64,7 @@
                 }
                 elementWatcher.enterViewport(enableDigest);
                 elementWatcher.exitViewport(disableDigest);
+                scope.$evalAsync(elementWatcher.update); // ensure initial calculation runs without scroll
                 scope.$on("toggleWatchers", function(event, enable) {
                     toggleWatchers(scope, enable);
                 });
