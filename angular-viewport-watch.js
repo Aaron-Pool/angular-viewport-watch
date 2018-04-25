@@ -1,6 +1,16 @@
 "use strict";
 
 (function() {
+    function viewportWatchContainer() {
+        restrict: "A",
+        bindToController: true,
+        link: function (scope, element, attr, ctrl) {
+            ctrl.getElement = function() {
+                return element;
+            }
+        }
+    }
+    
     viewportWatch.$inject = [ "scrollMonitor", "$timeout" ];
     function viewportWatch(scrollMonitor, $timeout) {
         var viewportUpdateTimeout;
@@ -8,12 +18,15 @@
             $timeout.cancel(viewportUpdateTimeout);
             viewportUpdateTimeout = $timeout(function() {
                 scrollMonitor.update();
-            }, 10, false); // use false to ensure additional digest isn't called every 10 ms
+            }, 10);
         }
         return {
             restrict: "AE",
-            link: function(scope, element, attr) {
-                var elementWatcher = scrollMonitor.create(element, scope.$eval(attr.viewportWatch || "0"));
+            require: '^^?viewportWatchContainer',
+            link: function(scope, element, attr, controller) {
+                var container = controller ? controller.getElement() : null;
+                var containerMonitor = container ? scrollMonitor.createContainer(container) : null;
+                var elementWatcher = (containerMonitor || scrollMonitor).create(element, scope.$eval(attr.viewportWatch || "0"));
                 function watchDuringDisable() {
                     this.$$watchersBackup = this.$$watchersBackup || [];
                     this.$$watchers = this.$$watchersBackup;
@@ -64,7 +77,6 @@
                 }
                 elementWatcher.enterViewport(enableDigest);
                 elementWatcher.exitViewport(disableDigest);
-                scope.$evalAsync(elementWatcher.update); // ensure initial calculation runs without scroll
                 scope.$on("toggleWatchers", function(event, enable) {
                     toggleWatchers(scope, enable);
                 });
@@ -75,5 +87,8 @@
             }
         };
     }
-    angular.module("angularViewportWatch", []).directive("viewportWatch", viewportWatch).value("scrollMonitor", window.scrollMonitor);
+    angular.module("angularViewportWatch", [])
+        .directive("viewportWatch", viewportWatch)
+        .directive("viewportWatchContainer", viewportWatchContainer)
+        .value("scrollMonitor", window.scrollMonitor);
 })();
