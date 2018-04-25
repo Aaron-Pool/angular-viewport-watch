@@ -2,15 +2,21 @@
 
 (function() {
     function viewportWatchContainer() {
-        restrict: "A",
-        bindToController: true,
-        link: function (scope, element, attr, ctrl) {
-            ctrl.getElement = function() {
-                return element;
+        viewportWatchContainerCtrl.$inject = ["$element"];
+        return {
+            restrict: "A",
+            bindToController: true,
+            controller: viewportWatchContainerCtrl
+        }
+
+        function viewportWatchContainerCtrl($element) {
+            this.getElement = getElement;
+            function getElement() {
+                return $element;
             }
         }
     }
-    
+
     viewportWatch.$inject = [ "scrollMonitor", "$timeout" ];
     function viewportWatch(scrollMonitor, $timeout) {
         var viewportUpdateTimeout;
